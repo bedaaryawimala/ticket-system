@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Buat tiket{% endblock %}
+{% block content %}
+<header class="page-head"><p class="section-note">Permintaan baru</p><h1>Ceritakan masalahnya</h1><p class="muted">Tiket masuk antrean tanpa petugas. Tim dapat mengambil atau menugaskannya setelah masuk.</p></header>
+<form class="form-panel content-form" action="{{ url_for('tickets.submit_ticket') }}" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="title">Judul singkat</label>
+  <input id="title" name="title" maxlength="120" required placeholder="Contoh: Wi-Fi lab tidak dapat tersambung">
+  <label for="description">Penjelasan</label>
+  <textarea id="description" name="description" maxlength="5000" rows="7" required placeholder="Tulis apa yang terjadi dan apa yang sudah dicoba."></textarea>
+  <h2 class="form-section-title">Bantu tim menentukan urutan penanganan</h2>
+  <p class="muted form-help">Jawaban ini menentukan tingkat urgensi awal secara otomatis. Admin dapat mengoreksinya dengan alasan.</p>
+  <label for="work_blocked">Apakah pekerjaan utama terhenti karena masalah ini?</label>
+  <select id="work_blocked" name="work_blocked" required>
+    <option value="">Pilih jawaban</option><option value="yes">Ya, terhenti</option><option value="no">Tidak</option>
+  </select>
+  <label for="workaround_available">Apakah ada cara sementara agar pekerjaan tetap berjalan?</label>
+  <select id="workaround_available" name="workaround_available" required>
+    <option value="">Pilih jawaban</option><option value="yes">Ada</option><option value="no">Tidak ada</option>
+  </select>
+  <label for="waiting_impact">Apa dampaknya jika penanganan menunggu?</label>
+  <select id="waiting_impact" name="waiting_impact" required>
+    <option value="">Pilih dampak</option>
+    <option value="minor">Kecil, pekerjaan tetap berjalan</option>
+    <option value="disruptive">Mengganggu sebagian pekerjaan</option>
+    <option value="serious">Serius, banyak pekerjaan atau orang terdampak</option>
+  </select>
+  <div class="form-actions"><button class="button primary" type="submit">Kirim tiket</button><a class="text-link" href="{{ url_for('tickets.ticket_list') }}">Batal</a></div>
+</form>
+{% endblock %}

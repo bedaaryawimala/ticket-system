@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Error aplikasi{% endblock %}
+{% block content %}
+<header class="page-head">
+  <p class="section-note">Pengawasan aplikasi</p>
+  <h1>Error aplikasi</h1>
+  <p class="muted">Hanya ringkasan aman yang ditampilkan. Peristiwa asli tidak dapat diedit dari halaman ini.</p>
+</header>
+<form class="filters error-filters" method="get" action="{{ url_for('admin.error_list') }}">
+  <label for="q">Cari ID, kode, atau ringkasan</label>
+  <input id="q" name="q" maxlength="100" value="{{ query }}">
+  <label for="severity">Tingkat</label>
+  <select id="severity" name="severity">
+    <option value="">Semua</option>
+    <option value="error" {% if severity == 'error' %}selected{% endif %}>Error</option>
+    <option value="critical" {% if severity == 'critical' %}selected{% endif %}>Kritis</option>
+  </select>
+  <label for="status">Peninjauan</label>
+  <select id="status" name="status">
+    <option value="">Semua</option>
+    <option value="new" {% if status == 'new' %}selected{% endif %}>Belum ditinjau</option>
+    <option value="reviewed" {% if status == 'reviewed' %}selected{% endif %}>Ditinjau</option>
+  </select>
+  <label for="from">Dari</label>
+  <input id="from" name="from" type="date" value="{{ date_from }}">
+  <label for="to">Sampai</label>
+  <input id="to" name="to" type="date" value="{{ date_to }}">
+  <button class="button secondary" type="submit">Terapkan filter</button>
+</form>
+{% if events %}
+<p class="table-hint">Geser tabel untuk melihat kolom lain.</p>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">Kejadian</th><th scope="col">Kode</th><th scope="col">Ringkasan</th><th scope="col">Tingkat</th><th scope="col">Peninjauan</th><th scope="col">Waktu</th></tr></thead>
+    <tbody>
+      {% for event in events %}
+      <tr>
+        <td><a class="ticket-link" href="{{ url_for('admin.error_detail', event_id=event['id']) }}">{{ event['id'][:12] }}</a></td>
+        <td><code>{{ event['code'] }}</code></td>
+        <td>{{ event['safe_message'] }}</td>
+        <td>{{ 'Kritis' if event['severity'] == 'critical' else 'Error' }}</td>
+        <td>{{ 'Ditinjau' if event['review_status'] == 'reviewed' else 'Belum ditinjau' }}</td>
+        <td class="muted">{{ event['occurred_at']|local_time }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty"><h2>Tidak ada error yang cocok</h2><p>Ubah filter atau tunggu kejadian baru tercatat.</p></div>
+{% endif %}
+{% endblock %}

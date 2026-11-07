@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Masuk{% endblock %}
+{% block content %}
+<section class="login-wrap">
+  <p class="section-note">Sistem permintaan tim kecil</p>
+  <h1>Masuk ke meja tiket</h1>
+  <p class="muted">Lihat permintaan yang perlu Anda laporkan, tangani, atau tinjau.</p>
+  <form class="form-panel login-form" method="post" action="{{ url_for('auth.login') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" maxlength="254" autocomplete="username" required>
+    <label for="password">Kata sandi</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button class="button primary" type="submit">Masuk</button>
+  </form>
+  <div class="auth-links">
+    <a href="{{ url_for('auth.register') }}">Buat akun pelapor</a>
+    <a href="{{ url_for('auth.forgot_password') }}">Lupa kata sandi?</a>
+  </div>
+</section>
+{% endblock %}

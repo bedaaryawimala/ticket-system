@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Semua tiket{% endblock %}
+{% block content %}
+<header class="page-head">
+  <p class="section-note">Pengawasan tim</p>
+  <h1>Semua tiket</h1>
+  <p class="muted">Cari permintaan dan lihat siapa yang sedang menanganinya.</p>
+</header>
+<form class="filters ticket-filters" method="get" action="{{ url_for('admin.ticket_list') }}">
+  <label for="q">Cari judul atau nomor</label>
+  <input id="q" name="q" value="{{ query }}" maxlength="100">
+  <label for="status">Status</label>
+  <select id="status" name="status">
+    <option value="">Semua</option>
+    {% for key, label in status_labels.items() %}
+      <option value="{{ key }}" {% if key == status %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <label for="urgency">Urgensi</label>
+  <select id="urgency" name="urgency">
+    <option value="">Semua</option>
+    {% for key, label in urgency_labels.items() %}<option value="{{ key }}" {% if key == urgency %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <button class="button secondary" type="submit">Terapkan filter</button>
+</form>
+{% if tickets %}
+<p class="table-hint">Geser tabel untuk melihat kolom lain.</p>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th scope="col">Tiket</th><th scope="col">Urgensi</th><th scope="col">Status</th><th scope="col">Pelapor</th><th scope="col">Petugas</th><th scope="col">Diperbarui</th></tr></thead>
+    <tbody>
+      {% for ticket in tickets %}
+      <tr>
+        <td><a class="ticket-link" href="{{ url_for('tickets.ticket_detail', ticket_id=ticket['id']) }}"><span class="ticket-number">#{{ ticket['id'] }}</span>{{ ticket['title'] }}</a></td>
+        <td><span class="urgency urgency-{{ ticket['urgency'] }}">{{ urgency_labels[ticket['urgency']] }}</span></td>
+        <td><span class="status status-{{ ticket['status'] }}">{{ status_labels[ticket['status']] }}</span></td>
+        <td>{{ ticket['requester_name'] }}</td>
+        <td>{{ ticket['agent_name'] or 'Belum ditugaskan' }}</td>
+        <td class="muted">{{ ticket['updated_at']|local_time }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty"><h2>Tidak ada tiket yang cocok</h2><p>Ubah kata pencarian atau status untuk melihat tiket lain.</p></div>
+{% endif %}
+{% endblock %}

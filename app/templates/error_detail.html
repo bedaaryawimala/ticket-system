@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Error {{ event['id'][:12] }}{% endblock %}
+{% block content %}
+<p class="back-link"><a href="{{ url_for('admin.error_list') }}">Kembali ke daftar error</a></p>
+<header class="page-head detail-head">
+  <div>
+    <p class="section-note">Kejadian {{ event['id'][:12] }}</p>
+    <h1>{{ event['code'] }}</h1>
+    <p class="muted">{{ event['safe_message'] }}</p>
+  </div>
+  <span class="review-state">{{ 'Ditinjau' if event['review_status'] == 'reviewed' else 'Belum ditinjau' }}</span>
+</header>
+<dl class="ticket-meta">
+  <div><dt>Waktu</dt><dd>{{ event['occurred_at']|local_time }}</dd></div>
+  <div><dt>Komponen</dt><dd>{{ event['component'] }}</dd></div>
+  <div><dt>Tingkat</dt><dd>{{ event['severity'] }}</dd></div>
+  <div><dt>Status HTTP</dt><dd>{{ event['http_status'] }}</dd></div>
+  <div><dt>Route</dt><dd>{{ event['route_template'] or 'Tidak tersedia' }}</dd></div>
+  <div><dt>ID kejadian</dt><dd class="break-word">{{ event['id'] }}</dd></div>
+</dl>
+<div class="detail-grid">
+  <section class="content-section">
+    <h2>Catatan penanganan</h2>
+    {% if notes %}
+    <ol class="comments">
+      {% for note in notes %}
+      <li>
+        <div class="comment-meta">
+          <strong>{{ note['author_name'] }}</strong>
+          <time datetime="{{ note['created_at'] }}">{{ note['created_at']|local_time }}</time>
+        </div>
+        <p class="preserve-lines">{{ note['body'] }}</p>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}<p class="muted">Belum ada catatan.</p>{% endif %}
+    <form method="post" action="{{ url_for('admin.add_error_note', event_id=event['id']) }}" class="reply-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="body">Tambah catatan</label>
+      <textarea id="body" name="body" maxlength="2000" rows="4" required></textarea>
+      <button class="button secondary" type="submit">Simpan catatan</button>
+    </form>
+  </section>
+  <aside class="action-panel">
+    <h2>Peninjauan</h2>
+    {% if event['review_status'] == 'reviewed' %}
+      <p class="muted">Ditinjau oleh {{ event['reviewer_name'] }} pada {{ event['reviewed_at']|local_time }}.</p>
+    {% else %}
+      <p class="muted">Tandai setelah penyebab dan tindak lanjut diperiksa.</p>
+      <form method="post" action="{{ url_for('admin.review_error', event_id=event['id']) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button primary full" type="submit">Tandai ditinjau</button>
+      </form>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

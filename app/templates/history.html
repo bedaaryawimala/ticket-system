@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Riwayat tiket #{{ ticket['id'] }}{% endblock %}
+{% block content %}
+<p class="back-link"><a href="{{ url_for('tickets.ticket_detail', ticket_id=ticket['id']) }}">Kembali ke tiket</a></p>
+<header class="page-head">
+  <p class="section-note">Tiket #{{ ticket['id'] }}</p>
+  <h1>Riwayat aktivitas</h1>
+  <p class="muted">{{ ticket['title'] }}</p>
+</header>
+<ol class="history-list">
+  {% for event in events %}
+  <li>
+    <div class="history-time">{{ event['occurred_at']|local_time }}</div>
+    <div>
+      <h2>{{ event_labels[event['event_type']] }}</h2>
+      <p>Oleh {{ event['actor_name'] or 'Sistem' }}{% if event['from_status'] or event['to_status'] %}. {{ status_labels.get(event['from_status'], 'Awal') }} → {{ status_labels.get(event['to_status'], 'Akhir') }}{% endif %}{% if event['from_assignee_id'] or event['to_assignee_id'] %}. {{ event['previous_agent'] or 'Tanpa petugas' }} → {{ event['next_agent_name'] or 'Tanpa petugas' }}{% endif %}.</p>
+      {% if event['from_urgency'] or event['to_urgency'] %}<p>Urgensi: {{ urgency_labels.get(event['from_urgency'], 'Belum dinilai') }} → {{ urgency_labels[event['to_urgency']] }}</p>{% endif %}
+      {% if event['reason'] %}<p class="history-reason">Alasan: {{ event['reason'] }}</p>{% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% endblock %}

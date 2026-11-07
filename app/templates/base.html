@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Tiket Tim{% endblock %} | Tiket Tim</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">T</span><span>Tiket Tim<small>Meja permintaan</small></span></a>
+      {% if g.user %}
+      <nav aria-label="Navigasi utama">
+        {% if g.user['role'] == 'requester' %}
+          <a href="{{ url_for('tickets.ticket_list') }}">Tiket saya</a>
+          <a href="{{ url_for('tickets.new_ticket') }}">Buat tiket</a>
+        {% elif g.user['role'] == 'agent' %}
+          <a href="{{ url_for('tickets.ticket_list') }}">Tiket saya</a>
+          <a href="{{ url_for('tickets.queue') }}">Antrean</a>
+        {% else %}
+          <a href="{{ url_for('admin.ticket_list') }}">Semua tiket</a>
+          <a href="{{ url_for('tickets.queue') }}">Antrean</a>
+          <a href="{{ url_for('admin.account_list') }}">Akun tim</a>
+          <a href="{{ url_for('admin.error_list') }}">Error aplikasi</a>
+        {% endif %}
+      </nav>
+      <div class="sidebar-footer">
+        <span class="account-name">{{ g.user['display_name'] }}</span>
+        <span class="account-role">{{ {'requester': 'Pelapor', 'agent': 'Petugas', 'admin': 'Admin'}[g.user['role']] }}</span>
+        <form action="{{ url_for('auth.logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="logout" type="submit">Keluar</button>
+        </form>
+      </div>
+      {% endif %}
+    </aside>
+    <main class="main" id="main">
+      {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="notice {{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

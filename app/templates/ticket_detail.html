@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Tiket #{{ ticket['id'] }}{% endblock %}
+{% block content %}
+<p class="back-link"><a href="{{ url_for('admin.ticket_list') if g.user['role'] == 'admin' else url_for('tickets.ticket_list') }}">Kembali ke daftar</a></p>
+<header class="page-head detail-head">
+  <div>
+    <p class="section-note">Tiket #{{ ticket['id'] }}</p>
+    <h1>{{ ticket['title'] }}</h1>
+  </div>
+  <span class="status status-{{ ticket['status'] }}">{{ status_labels[ticket['status']] }}</span>
+</header>
+<dl class="ticket-meta">
+  <div><dt>Pelapor</dt><dd>{{ ticket['requester_name'] }}</dd></div>
+  <div><dt>Petugas</dt><dd>{{ ticket['agent_name'] or 'Belum ditugaskan' }}</dd></div>
+  <div><dt>Urgensi</dt><dd><span class="urgency urgency-{{ ticket['urgency'] }}">{{ urgency_labels[ticket['urgency']] }}</span></dd></div>
+  <div><dt>Dibuat</dt><dd>{{ ticket['created_at']|local_time }}</dd></div>
+  <div><dt>Terakhir diperbarui</dt><dd>{{ ticket['updated_at']|local_time }}</dd></div>
+</dl>
+<div class="detail-grid">
+  <div>
+    <section class="content-section">
+      <h2>Permintaan</h2>
+      <p class="preserve-lines">{{ ticket['description'] }}</p>
+      {% if ticket['work_blocked'] is not none %}
+      <p class="muted">Pekerjaan terhenti: {{ 'Ya' if ticket['work_blocked'] else 'Tidak' }} · Cara sementara: {{ 'Ada' if ticket['workaround_available'] else 'Tidak ada' }} · Dampak menunggu: {{ {'minor': 'Kecil', 'disruptive': 'Mengganggu', 'serious': 'Serius'}[ticket['waiting_impact']] }}</p>
+      {% else %}<p class="muted">Tiket ini dibuat sebelum penilaian otomatis tersedia. Tingkat awalnya Normal dan dapat dikoreksi admin.</p>
+      {% endif %}
+    </section>
+    <section class="content-section">
+      <h2>Percakapan</h2>
+      {% if comments %}
+      <ol class="comments">
+        {% for comment in comments %}
+        <li>
+          <div class="comment-meta">
+            <strong>{{ comment['author_name'] }}</strong>
+            <time datetime="{{ comment['created_at'] }}">{{ comment['created_at']|local_time }}</time>
+          </div>
+          <p class="preserve-lines">{{ comment['body'] }}</p>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}<p class="muted">Belum ada balasan.</p>{% endif %}
+      {% if ticket['status'] != 'closed' and (g.user['role'] != 'agent' or ticket['assigned_agent_id'] == g.user['id']) %}
+      <form method="post" action="{{ url_for('tickets.submit_comment', ticket_id=ticket['id']) }}" class="reply-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="body">Tulis balasan</label>
+        <textarea id="body" name="body" rows="4" maxlength="2000" required></textarea>
+        <button class="button secondary" type="submit">Kirim balasan</button>
+      </form>
+      {% endif %}
+    </section>
+  </div>
+  <aside class="action-panel" aria-label="Tindakan tiket">
+    <h2>Tindakan</h2>
+    {% if g.user['role'] == 'agent' and ticket['status'] == 'open' and ticket['assigned_agent_id'] is none %}
+    <form method="post" action="{{ url_for('tickets.claim', ticket_id=ticket['id']) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="version" value="{{ ticket['version'] }}">
+      <button class="button primary full" type="submit">Ambil tiket</button>
+    </form>
+    {% elif g.user['role'] == 'agent' and ticket['assigned_agent_id'] == g.user['id'] and ticket['status'] == 'open' %}
+    <form method="post" action="{{ url_for('tickets.transition', ticket_id=ticket['id'], action='start') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="version" value="{{ ticket['version'] }}">
+      <button class="button primary full" type="submit">Mulai kerja</button>
+    </form>
+    {% elif g.user['role'] == 'agent' and ticket['assigned_agent_id'] == g.user['id'] and ticket['status'] == 'in_progress' %}
+    <form method="post" action="{{ url_for('tickets.transition', ticket_id=ticket['id'], action='resolve') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="version" value="{{ ticket['version'] }}">
+      <button class="button primary full" type="submit">Tandai selesai</button>
+    </form>
+    {% endif %}
+    {% if g.user['role'] == 'requester' and ticket['status'] == 'resolved' %}
+    <p class="muted">Coba hasil pengerjaan. Tutup jika sudah sesuai.</p>
+    <form method="post" action="{{ url_for('tickets.transition', ticket_id=ticket['id'], action='close') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="version" value="{{ ticket['version'] }}">
+      <button class="button primary full" type="submit">Konfirmasi dan tutup</button>
+    </form>
+    {% endif %}
+    {% if g.user['role'] == 'requester' and ticket['status'] in ('resolved', 'closed') %}
+    <form method="post" action="{{ url_for('tickets.transition', ticket_id=ticket['id'], action='reopen') }}" class="action-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="version" value="{{ ticket['version'] }}">
+      <label for="reason">Masih ada masalah?</label>
+      <textarea id="reason" name="reason" maxlength="500" rows="3" required placeholder="Jelaskan apa yang belum beres."></textarea>
+      <button class="button secondary full" type="submit">Buka kembali</button>
+    </form>
+    {% endif %}
+    {% if g.user['role'] == 'admin' %}
+    <form method="post" action="{{ url_for('admin.update_urgency', ticket_id=ticket['id']) }}" class="action-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="version" value="{{ ticket['version'] }}">
+      <label for="urgency">Koreksi urgensi</label>
+      <select id="urgency" name="urgency" required>
+        {% for key, label in urgency_labels.items() %}<option value="{{ key }}" {% if key == ticket['urgency'] %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <label for="urgency-reason">Alasan perubahan</label>
+      <textarea id="urgency-reason" name="reason" maxlength="500" rows="3" required></textarea>
+      <button class="button secondary full" type="submit">Simpan urgensi</button>
+    </form>
+    {% if ticket['status'] in ('open', 'in_progress') %}
+    <form method="post" action="{{ url_for('admin.assign', ticket_id=ticket['id']) }}" class="action-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="version" value="{{ ticket['version'] }}">
+      <label for="agent_id">Petugas</label>
+      <select id="agent_id" name="agent_id">
+        <option value="">{% if ticket['status'] == 'open' %}Tanpa petugas{% else %}Pilih petugas{% endif %}</option>
+        {% for agent in agents %}
+        <option value="{{ agent['id'] }}" {% if agent['id'] == ticket['assigned_agent_id'] %}selected{% endif %}>{{ agent['display_name'] }}</option>
+        {% endfor %}
+      </select>
+      <label for="assign-reason">Alasan perubahan</label>
+      <textarea id="assign-reason" name="reason" maxlength="500" rows="3" placeholder="Wajib saat memindahkan atau melepas petugas."></textarea>
+      <button class="button primary full" type="submit">Simpan penugasan</button>
+    </form>
+    {% endif %}
+    <a class="text-link" href="{{ url_for('admin.history', ticket_id=ticket['id']) }}">Lihat riwayat lengkap</a>
+    {% endif %}
+    {% if ticket['status'] == 'open' and ticket['assigned_agent_id'] is none and g.user['role'] == 'requester' %}<p class="muted">Tiket menunggu petugas mengambil atau ditugaskan admin.</p>{% endif %}
+  </aside>
+</div>
+{% endblock %}
