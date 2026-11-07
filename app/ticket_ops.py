@@ -17,10 +17,10 @@ def utc_now():
 
 def required_text(raw_text, maximum, field_name):
     if not isinstance(raw_text, str):
-        raise TicketActionError(400, f"{field_name} harus berupa teks.")
+        raise TicketActionError(400, f"{field_name} must be text.")
     cleaned = raw_text.strip()
     if not 1 <= len(cleaned) <= maximum:
-        raise TicketActionError(400, f"{field_name} harus berisi 1 sampai {maximum} karakter.")
+        raise TicketActionError(400, f"{field_name} must be 1 to {maximum} characters long.")
     return cleaned
 
 
@@ -28,9 +28,9 @@ def parse_version(raw_version):
     try:
         version = int(raw_version)
     except (TypeError, ValueError):
-        raise TicketActionError(400, "Versi tiket tidak valid.") from None
+        raise TicketActionError(400, "Invalid ticket version.") from None
     if version < 0:
-        raise TicketActionError(400, "Versi tiket tidak valid.")
+        raise TicketActionError(400, "Invalid ticket version.")
     return version
 
 
@@ -49,7 +49,7 @@ def write_transaction():
 def ticket_in_transaction(connection, ticket_id):
     ticket = connection.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
     if ticket is None:
-        raise TicketActionError(404, "Tiket tidak ditemukan.")
+        raise TicketActionError(404, "Ticket not found.")
     return ticket
 
 
@@ -65,9 +65,9 @@ def can_view(ticket, user):
 
 def classify_urgency(work_blocked, workaround_available, waiting_impact):
     if work_blocked not in ("yes", "no") or workaround_available not in ("yes", "no"):
-        raise TicketActionError(400, "Jawab pertanyaan tentang pekerjaan dan solusi sementara.")
+        raise TicketActionError(400, "Answer the questions about blocked work and workarounds.")
     if waiting_impact not in ("minor", "disruptive", "serious"):
-        raise TicketActionError(400, "Pilih dampak jika penanganan tertunda.")
+        raise TicketActionError(400, "Select the impact of waiting for help.")
     blocked = work_blocked == "yes"
     workaround = workaround_available == "yes"
     if waiting_impact == "serious" or (blocked and not workaround):
@@ -79,9 +79,9 @@ def classify_urgency(work_blocked, workaround_available, waiting_impact):
 
 def create_ticket(user, title, description, work_blocked, workaround_available, waiting_impact):
     if user["role"] != "requester":
-        raise TicketActionError(403, "Akun ini tidak dapat membuat tiket.")
-    title = required_text(title, 120, "Judul")
-    description = required_text(description, 5000, "Penjelasan")
+        raise TicketActionError(403, "This account cannot create tickets.")
+    title = required_text(title, 120, "Title")
+    description = required_text(description, 5000, "Description")
     urgency = classify_urgency(work_blocked, workaround_available, waiting_impact)
     now = utc_now()
     with write_transaction() as connection:
@@ -103,24 +103,24 @@ def create_ticket(user, title, description, work_blocked, workaround_available, 
 
 def change_urgency(user, ticket_id, expected_version, urgency, reason):
     if user["role"] != "admin":
-        raise TicketActionError(403, "Hanya admin yang dapat mengubah tingkat urgensi.")
+        raise TicketActionError(403, "Only admins can change urgency.")
     if urgency not in ("low", "normal", "high"):
-        raise TicketActionError(400, "Tingkat urgensi tidak valid.")
-    reason = required_text(reason, 500, "Alasan perubahan urgensi")
+        raise TicketActionError(400, "Invalid urgency level.")
+    reason = required_text(reason, 500, "Reason for changing urgency")
     now = utc_now()
     with write_transaction() as connection:
         ticket = ticket_in_transaction(connection, ticket_id)
         if ticket["version"] != expected_version:
-            raise TicketActionError(409, "Tiket sudah berubah. Muat ulang sebelum mengubah urgensi.")
+            raise TicketActionError(409, "The ticket has changed. Reload it before changing urgency.")
         if ticket["urgency"] == urgency:
-            raise TicketActionError(400, "Tingkat urgensi belum berubah.")
+            raise TicketActionError(400, "Choose a different urgency level.")
         changed = connection.execute(
             "UPDATE tickets SET urgency = ?, version = version + 1, updated_at = ? "
             "WHERE id = ? AND version = ?",
             (urgency, now, ticket_id, expected_version),
         ).rowcount
         if changed != 1:
-            raise TicketActionError(409, "Tiket sudah berubah. Muat ulang sebelum mengubah urgensi.")
+            raise TicketActionError(409, "The ticket has changed. Reload it before changing urgency.")
         connection.execute(
             "INSERT INTO ticket_events (ticket_id, actor_id, event_type, from_urgency, "
             "to_urgency, reason, occurred_at) "
@@ -130,14 +130,14 @@ def change_urgency(user, ticket_id, expected_version, urgency, reason):
 
 
 def add_comment(user, ticket_id, body):
-    body = required_text(body, 2000, "Komentar")
+    body = required_text(body, 2000, "Comment")
     now = utc_now()
     with write_transaction() as connection:
         ticket = ticket_in_transaction(connection, ticket_id)
         if not can_view(ticket, user) or (user["role"] == "agent" and ticket["assigned_agent_id"] != user["id"]):
-            raise TicketActionError(404, "Tiket tidak ditemukan.")
+            raise TicketActionError(404, "Ticket not found.")
         if ticket["status"] == "closed":
-            raise TicketActionError(409, "Tiket sudah ditutup. Pemilik dapat membukanya kembali.")
+            raise TicketActionError(409, "This ticket is closed. The requester can reopen it.")
         cursor = connection.execute(
             "INSERT INTO comments (ticket_id, author_id, body, created_at) VALUES (?, ?, ?, ?)",
             (ticket_id, user["id"], body, now),
@@ -151,7 +151,7 @@ def add_comment(user, ticket_id, body):
 
 def claim_ticket(user, ticket_id, expected_version):
     if user["role"] != "agent":
-        raise TicketActionError(403, "Hanya petugas yang dapat mengambil tiket.")
+        raise TicketActionError(403, "Only agents can claim tickets.")
     now = utc_now()
     with write_transaction() as connection:
         ticket_in_transaction(connection, ticket_id)
@@ -161,7 +161,7 @@ def claim_ticket(user, ticket_id, expected_version):
             (user["id"], now, ticket_id, expected_version),
         ).rowcount
         if changed != 1:
-            raise TicketActionError(409, "Tiket sudah diambil atau berubah. Muat ulang antrean.")
+            raise TicketActionError(409, "The ticket has been claimed or changed. Reload the queue.")
         connection.execute(
             "INSERT INTO ticket_events (ticket_id, actor_id, event_type, to_assignee_id, occurred_at) "
             "VALUES (?, ?, 'claimed', ?, ?)",
@@ -171,37 +171,37 @@ def claim_ticket(user, ticket_id, expected_version):
 
 def assign_ticket(user, ticket_id, expected_version, agent_id, reason):
     if user["role"] != "admin":
-        raise TicketActionError(403, "Hanya admin yang dapat menugaskan tiket.")
+        raise TicketActionError(403, "Only admins can assign tickets.")
     now = utc_now()
     with write_transaction() as connection:
         ticket = ticket_in_transaction(connection, ticket_id)
         if ticket["version"] != expected_version:
-            raise TicketActionError(409, "Tiket sudah berubah. Muat ulang sebelum menugaskan.")
+            raise TicketActionError(409, "The ticket has changed. Reload it before assigning an agent.")
         if ticket["status"] not in ("open", "in_progress"):
-            raise TicketActionError(409, "Tiket pada status ini tidak dapat ditugaskan.")
+            raise TicketActionError(409, "An agent cannot be assigned at this ticket status.")
         if agent_id is not None:
             agent = connection.execute(
                 "SELECT id FROM users WHERE id = ? AND role = 'agent' AND active = 1", (agent_id,)
             ).fetchone()
             if agent is None:
-                raise TicketActionError(400, "Pilih petugas yang aktif.")
+                raise TicketActionError(400, "Select an active agent.")
         elif ticket["status"] != "open":
-            raise TicketActionError(409, "Tiket yang sedang dikerjakan harus memiliki petugas.")
+            raise TicketActionError(409, "A ticket in progress must have an agent.")
         if ticket["assigned_agent_id"] == agent_id:
-            raise TicketActionError(400, "Petugas tiket belum berubah.")
+            raise TicketActionError(400, "Choose a different agent.")
         if ticket["assigned_agent_id"] is not None:
-            reason = required_text(reason, 500, "Alasan perubahan petugas")
+            reason = required_text(reason, 500, "Reason for changing the agent")
         else:
             reason = reason.strip() if isinstance(reason, str) else ""
             if len(reason) > 500:
-                raise TicketActionError(400, "Alasan terlalu panjang.")
+                raise TicketActionError(400, "Reason must be 500 characters or less.")
         changed = connection.execute(
             "UPDATE tickets SET assigned_agent_id = ?, version = version + 1, updated_at = ? "
             "WHERE id = ? AND version = ?",
             (agent_id, now, ticket_id, expected_version),
         ).rowcount
         if changed != 1:
-            raise TicketActionError(409, "Tiket sudah berubah. Muat ulang sebelum menugaskan.")
+            raise TicketActionError(409, "The ticket has changed. Reload it before assigning an agent.")
         event_type = "assigned" if ticket["assigned_agent_id"] is None else "unassigned" if agent_id is None else "reassigned"
         connection.execute(
             "INSERT INTO ticket_events (ticket_id, actor_id, event_type, from_assignee_id, to_assignee_id, reason, occurred_at) "
@@ -221,26 +221,26 @@ def change_status(user, ticket_id, expected_version, action, reason=None):
         ticket = ticket_in_transaction(connection, ticket_id)
         if action == "reopen":
             if user["role"] != "requester" or ticket["requester_id"] != user["id"]:
-                raise TicketActionError(404, "Tiket tidak ditemukan.")
+                raise TicketActionError(404, "Ticket not found.")
             if ticket["version"] != expected_version:
-                raise TicketActionError(409, "Tiket sudah berubah. Muat ulang sebelum melanjutkan.")
+                raise TicketActionError(409, "The ticket has changed. Reload it before continuing.")
             if ticket["status"] not in ("resolved", "closed"):
-                raise TicketActionError(409, "Tiket ini belum dapat dibuka kembali.")
-            reason = required_text(reason, 500, "Alasan buka kembali")
+                raise TicketActionError(409, "This ticket cannot be reopened yet.")
+            reason = required_text(reason, 500, "Reason for reopening")
             to_status, event_type = "open", "reopened"
         else:
             if action not in transitions:
-                raise TicketActionError(400, "Tindakan tiket tidak dikenal.")
+                raise TicketActionError(400, "Unknown ticket action.")
             from_status, to_status, event_type = transitions[action]
             if action in ("start", "resolve"):
                 if user["role"] != "agent" or ticket["assigned_agent_id"] != user["id"]:
-                    raise TicketActionError(404, "Tiket tidak ditemukan.")
+                    raise TicketActionError(404, "Ticket not found.")
             elif user["role"] != "requester" or ticket["requester_id"] != user["id"]:
-                raise TicketActionError(404, "Tiket tidak ditemukan.")
+                raise TicketActionError(404, "Ticket not found.")
             if ticket["version"] != expected_version:
-                raise TicketActionError(409, "Tiket sudah berubah. Muat ulang sebelum melanjutkan.")
+                raise TicketActionError(409, "The ticket has changed. Reload it before continuing.")
             if ticket["status"] != from_status:
-                raise TicketActionError(409, "Status tiket sudah berubah. Muat ulang halaman.")
+                raise TicketActionError(409, "The ticket status has changed. Reload the page.")
         resolved_at = now if to_status == "resolved" else None if to_status == "open" else ticket["resolved_at"]
         closed_at = now if to_status == "closed" else None if to_status == "open" else ticket["closed_at"]
         connection.execute(

@@ -28,13 +28,13 @@ def valid_password(password):
 
 def new_user_error(name, email, password, confirmation):
     if not 1 <= len(name) <= 80:
-        return "Nama harus berisi 1 sampai 80 karakter."
+        return "Name must be 1 to 80 characters long."
     if not valid_email(email):
-        return "Masukkan alamat email yang valid."
+        return "Enter a valid email address."
     if not valid_password(password):
-        return "Kata sandi harus berisi 12 sampai 128 karakter."
+        return "Password must be 12 to 128 characters long."
     if password != confirmation:
-        return "Ulangi kata sandi yang sama."
+        return "Passwords do not match."
     return None
 
 
@@ -100,7 +100,7 @@ def login():
                 session["auth_version"] = user["session_version"]
                 session.permanent = True
                 return redirect(url_for("index"), code=303)
-        flash("Email atau kata sandi tidak cocok.", "error")
+        flash("Email or password is incorrect.", "error")
     return render_template("login.html")
 
 
@@ -129,7 +129,7 @@ def register():
             with write_transaction() as connection:
                 user_id = create_user(connection, name, email, password, "requester")
         except sqlite3.IntegrityError:
-            error = "Alamat email sudah digunakan. Coba masuk atau reset kata sandi."
+            error = "This email address is already in use. Sign in or reset your password."
         else:
             session.clear()
             session["user_id"] = user_id
@@ -187,11 +187,11 @@ def reset_password():
     confirmation = request.form.get("password_confirm", "")
     error = None
     if not 1 <= len(code) <= 128:
-        error = "Kode reset tidak valid atau sudah kedaluwarsa."
+        error = "The reset code is invalid or has expired."
     elif not valid_password(password):
-        error = "Kata sandi harus berisi 12 sampai 128 karakter."
+        error = "Password must be 12 to 128 characters long."
     elif password != confirmation:
-        error = "Ulangi kata sandi yang sama."
+        error = "Passwords do not match."
     else:
         token_hash = hashlib.sha256(code.encode()).hexdigest()
         with write_transaction() as connection:
@@ -203,7 +203,7 @@ def reset_password():
                 (token_hash, utc_now()),
             ).fetchone()
             if token is None:
-                error = "Kode reset tidak valid atau sudah kedaluwarsa."
+                error = "The reset code is invalid or has expired."
             else:
                 connection.execute(
                     "UPDATE users SET password_hash = ?, session_version = session_version + 1 "
@@ -221,6 +221,6 @@ def reset_password():
                 )
         if error is None:
             session.clear()
-            flash("Kata sandi sudah diganti. Silakan masuk.")
+            flash("Password changed. Please sign in.")
             return redirect(url_for("auth.login"), code=303)
     return render_template("reset_password.html", error=error, code=code), 400

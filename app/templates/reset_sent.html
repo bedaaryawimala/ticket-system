@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Periksa kotak surat demo{% endblock %}
+{% block title %}Check the demo outbox{% endblock %}
 {% block content %}
 <section class="login-wrap">
-  <p class="section-note">Pemulihan akun</p>
-  <h1>Periksa kotak surat demo</h1>
-  <p>Jika email tersebut terdaftar dan aktif, kode reset tersedia di kotak surat lokal. Kode berlaku 30 menit dan hanya bisa dipakai sekali.</p>
-  <p class="muted">Dari PowerShell di folder proyek, jalankan <code>.\.venv\Scripts\python -m scripts.show_demo_mail --email EMAIL_ANDA</code>, lalu salin kodenya.</p>
+  <p class="section-note">Account recovery</p>
+  <h1>Check the demo outbox</h1>
+  <p>If the address belongs to an active account, a reset code is available in the local outbox. The code expires after 30 minutes and can be used once.</p>
+  <p class="muted">From PowerShell in the project folder, run <code>.\.venv\Scripts\python -m scripts.show_demo_mail --email YOUR_EMAIL</code>, then copy the code.</p>
   <div class="auth-links">
-    <a class="button primary" href="{{ url_for('auth.reset_password') }}">Masukkan kode reset</a>
-    <a href="{{ url_for('auth.login') }}">Kembali ke masuk</a>
+    <a class="button primary" href="{{ url_for('auth.reset_password') }}">Enter reset code</a>
+    <a href="{{ url_for('auth.login') }}">Back to sign in</a>
   </div>
 </section>
 {% endblock %}

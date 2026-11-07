@@ -11,9 +11,9 @@ from flask import current_app, has_request_context, request
 from .db import get_db
 
 SAFE_MESSAGES = {
-    "DB_UNAVAILABLE": ("database", "Penyimpanan sedang tidak tersedia.", 503),
-    "APP_ERROR": ("application", "Aplikasi tidak dapat memproses permintaan.", 500),
-    "DEMO_ERROR": ("demo", "Kejadian contoh untuk dashboard.", 500),
+    "DB_UNAVAILABLE": ("database", "Storage is temporarily unavailable.", 503),
+    "APP_ERROR": ("application", "The application could not process the request.", 500),
+    "DEMO_ERROR": ("demo", "Sample incident for the dashboard.", 500),
 }
 
 

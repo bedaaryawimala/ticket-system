@@ -25,7 +25,7 @@ def main():
             "SELECT COUNT(*) FROM users WHERE email IN (?, ?, ?)", addresses
         ).fetchone()[0]
         if existing:
-            raise SystemExit("Akun demo sudah ada. Seed tidak dijalankan ulang.")
+            raise SystemExit("Demo accounts already exist. The seed was not run again.")
         now = utc_now()
         connection.execute("BEGIN IMMEDIATE")
         try:
@@ -37,9 +37,9 @@ def main():
                 )
                 ids[role] = cursor.lastrowid
             examples = (
-                ("Wi-Fi lab tidak tersambung", "Laptop tidak mendapat koneksi sejak pagi. Sudah mencoba menyambung ulang.", "open", None),
-                ("Akses ruang rapat", "Kartu akses belum membuka ruang rapat lantai dua.", "in_progress", ids["agent"]),
-                ("Permintaan akun percobaan", "Saya memerlukan akun percobaan untuk pelatihan internal.", "resolved", ids["agent"]),
+                ("Lab Wi-Fi is unavailable", "The laptop has had no connection since this morning. Reconnecting did not help.", "open", None),
+                ("Meeting room access", "The access card does not open the second-floor meeting room.", "in_progress", ids["agent"]),
+                ("Training account request", "I need a test account for internal training.", "resolved", ids["agent"]),
             )
             for title, description, status, agent_id in examples:
                 cursor = connection.execute(
@@ -70,8 +70,8 @@ def main():
         except BaseException:
             connection.execute("ROLLBACK")
             raise
-        record_error("DEMO_ERROR", "demo", "Kejadian contoh untuk dashboard.", 500)
-    print("Tiga akun, tiga tiket, dan satu error fiktif tersedia.")
+        record_error("DEMO_ERROR", "demo", "Sample incident for the dashboard.", 500)
+    print("Three demo accounts, three tickets, and one sample error were created.")
 
 
 if __name__ == "__main__":

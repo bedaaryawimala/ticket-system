@@ -7,15 +7,15 @@ from pathlib import Path
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Tampilkan kode reset terbaru dari kotak surat demo lokal.")
-    parser.add_argument("--email", required=True, help="Email akun yang meminta reset")
+    parser = argparse.ArgumentParser(description="Show the latest active reset code from the local demo outbox.")
+    parser.add_argument("--email", required=True, help="Email address of the account requesting a reset")
     args = parser.parse_args()
 
     instance = Path(__file__).resolve().parents[1] / "instance"
     outbox = instance / "demo-reset-mail.jsonl"
     database = instance / "tickets.sqlite3"
     if not outbox.exists() or not database.exists():
-        raise SystemExit("Kotak surat demo belum berisi pesan reset.")
+        raise SystemExit("The demo outbox has no reset messages yet.")
     with sqlite3.connect(database) as connection:
         for line in reversed(outbox.read_text(encoding="utf-8").splitlines()):
             message = json.loads(line)
@@ -28,11 +28,11 @@ def main():
                 (token_hash, datetime.now(timezone.utc).isoformat(timespec="seconds")),
             ).fetchone()
             if active:
-                print("Buka halaman 'Masukkan kode reset' pada aplikasi yang sedang berjalan.")
-                print(f"Kode reset: {message['code']}")
-                print("Kode berlaku 30 menit sejak diminta dan hanya bisa dipakai sekali.")
+                print("Open the 'Enter reset code' page in the running application.")
+                print(f"Reset code: {message['code']}")
+                print("The code expires 30 minutes after the request and can be used once.")
                 return
-    raise SystemExit("Tidak ada kode reset aktif untuk email tersebut.")
+    raise SystemExit("No active reset code was found for that email address.")
 
 
 if __name__ == "__main__":

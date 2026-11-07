@@ -15,7 +15,7 @@ csrf = CSRFProtect()
 
 def local_time(timestamp):
     jakarta = timezone(timedelta(hours=7))
-    return datetime.fromisoformat(timestamp).astimezone(jakarta).strftime("%d-%m-%Y %H:%M WIB")
+    return datetime.fromisoformat(timestamp).astimezone(jakarta).strftime("%Y-%m-%d %H:%M UTC+07:00")
 
 
 def create_app(test_config=None):
@@ -48,18 +48,18 @@ def create_app(test_config=None):
     app.register_blueprint(admin.bp)
     app.add_template_filter(local_time)
     app.jinja_env.globals["status_labels"] = {
-        "open": "Terbuka", "in_progress": "Dikerjakan",
-        "resolved": "Selesai", "closed": "Ditutup",
+        "open": "Open", "in_progress": "In progress",
+        "resolved": "Resolved", "closed": "Closed",
     }
     app.jinja_env.globals["urgency_labels"] = {
-        "low": "Rendah", "normal": "Normal", "high": "Tinggi",
+        "low": "Low", "normal": "Normal", "high": "High",
     }
     app.jinja_env.globals["event_labels"] = {
-        "created": "Tiket dibuat", "claimed": "Tiket diambil", "assigned": "Petugas ditugaskan",
-        "reassigned": "Petugas dipindahkan", "unassigned": "Petugas dilepas",
-        "started": "Pekerjaan dimulai", "resolved": "Ditandai selesai",
-        "closed": "Ditutup pelapor", "reopened": "Dibuka kembali", "commented": "Komentar ditambahkan",
-        "urgency_changed": "Urgensi diubah",
+        "created": "Ticket created", "claimed": "Ticket claimed", "assigned": "Agent assigned",
+        "reassigned": "Agent reassigned", "unassigned": "Agent unassigned",
+        "started": "Work started", "resolved": "Marked as resolved",
+        "closed": "Closed by requester", "reopened": "Reopened", "commented": "Comment added",
+        "urgency_changed": "Urgency changed",
     }
 
     @app.before_request
@@ -102,22 +102,22 @@ def create_app(test_config=None):
 
     @app.errorhandler(CSRFError)
     def csrf_failed(_error):
-        return render_template("error.html", title="Form kedaluwarsa", message="Muat ulang halaman lalu kirim lagi."), 400
+        return render_template("error.html", title="Form expired", message="Reload the page, then submit the form again."), 400
 
     @app.errorhandler(TicketActionError)
     def ticket_action_failed(error):
-        return render_template("error.html", title=f"Kesalahan {error.status}", message=error.message), error.status
+        return render_template("error.html", title=f"Error {error.status}", message=error.message), error.status
 
     @app.errorhandler(HTTPException)
     def http_error(error):
         messages = {
-            400: "Periksa isian lalu coba lagi.",
-            403: "Akun ini tidak boleh membuka halaman tersebut.",
-            404: "Halaman atau tiket tidak ditemukan.",
-            409: "Tiket sudah berubah. Muat ulang halaman lalu coba lagi.",
-            413: "Isian terlalu besar.",
+            400: "Check your entries and try again.",
+            403: "Your account cannot access this page.",
+            404: "The page or ticket could not be found.",
+            409: "The ticket has changed. Reload the page and try again.",
+            413: "The request is too large.",
         }
-        return render_template("error.html", title=f"Kesalahan {error.code}", message=messages.get(error.code, "Permintaan tidak dapat diproses.")), error.code
+        return render_template("error.html", title=f"Error {error.code}", message=messages.get(error.code, "The request could not be processed.")), error.code
 
     @app.errorhandler(Exception)
     def unexpected_error(error):
@@ -126,15 +126,15 @@ def create_app(test_config=None):
         from .error_logging import record_error
 
         if isinstance(error, sqlite3.Error):
-            incident_id = record_error("DB_UNAVAILABLE", "database", "Penyimpanan sedang tidak tersedia.", 503)
+            incident_id = record_error("DB_UNAVAILABLE", "database", "Storage is temporarily unavailable.", 503)
             status = 503
         else:
-            incident_id = record_error("APP_ERROR", "application", "Aplikasi tidak dapat memproses permintaan.", 500)
+            incident_id = record_error("APP_ERROR", "application", "The application could not process the request.", 500)
             status = 500
         return render_template(
             "error.html",
-            title="Permintaan belum berhasil",
-            message="Coba lagi nanti. Jika masalah berlanjut, sampaikan ID kejadian kepada admin.",
+            title="Request not completed",
+            message="Try again later. If the problem continues, give the incident ID to an admin.",
             incident_id=incident_id,
         ), status
 

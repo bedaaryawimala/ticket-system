@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
-{% block title %}Masuk{% endblock %}
+{% block title %}Sign in{% endblock %}
 {% block content %}
 <section class="login-wrap">
-  <p class="section-note">Sistem permintaan tim kecil</p>
-  <h1>Masuk ke meja tiket</h1>
-  <p class="muted">Lihat permintaan yang perlu Anda laporkan, tangani, atau tinjau.</p>
+  <p class="section-note">Ticket requests for a small team</p>
+  <h1>Sign in to Team Tickets</h1>
+  <p class="muted">Report an issue, work on assigned tickets, or review team activity.</p>
   <form class="form-panel login-form" method="post" action="{{ url_for('auth.login') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="email">Email</label>
     <input id="email" name="email" type="email" maxlength="254" autocomplete="username" required>
-    <label for="password">Kata sandi</label>
+    <label for="password">Password</label>
     <input id="password" name="password" type="password" autocomplete="current-password" required>
-    <button class="button primary" type="submit">Masuk</button>
+    <button class="button primary" type="submit">Sign in</button>
   </form>
   <div class="auth-links">
-    <a href="{{ url_for('auth.register') }}">Buat akun pelapor</a>
-    <a href="{{ url_for('auth.forgot_password') }}">Lupa kata sandi?</a>
+    <a href="{{ url_for('auth.register') }}">Create requester account</a>
+    <a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
   </div>
 </section>
 {% endblock %}

@@ -6,7 +6,7 @@ def main():
     app = create_app()
     with app.app_context():
         count = reconcile_fallback()
-    print(f"{count} kejadian baru dimasukkan dari log lokal.")
+    print(f"Imported {count} new incident(s) from the local log.")
 
 
 if __name__ == "__main__":

@@ -13,8 +13,8 @@ class AdminAccountTests(TicketTestCase):
             "display_name": "Nina",
             "email": email,
             "role": role,
-            "password": "kata-sandi-tim-123",
-            "password_confirm": "kata-sandi-tim-123",
+            "password": "team-password-123",
+            "password_confirm": "team-password-123",
         }
 
     def test_only_admin_can_manage_team_accounts(self):
@@ -40,7 +40,7 @@ class AdminAccountTests(TicketTestCase):
                 ("nina@example.test",),
             ).fetchone()
             self.assertEqual(created["role"], "agent")
-            self.assertNotEqual(created["password_hash"], "kata-sandi-tim-123")
+            self.assertNotEqual(created["password_hash"], "team-password-123")
             self.assertEqual(connection.execute(
                 "SELECT role FROM users WHERE email = ?", ("reza@example.test",)
             ).fetchone()[0], "admin")
@@ -51,12 +51,12 @@ class AdminAccountTests(TicketTestCase):
         }).status_code, 303)
         agent_client = self.app.test_client()
         self.assertEqual(agent_client.post("/login", data={
-            "email": "nina@example.test", "password": "kata-sandi-tim-123",
+            "email": "nina@example.test", "password": "team-password-123",
         }).status_code, 303)
-        self.assertIn("Wi-Fi lab", agent_client.get("/tickets").get_data(as_text=True))
+        self.assertIn("Lab Wi-Fi is down", agent_client.get("/tickets").get_data(as_text=True))
         admin_client = self.app.test_client()
         self.assertEqual(admin_client.post("/login", data={
-            "email": "reza@example.test", "password": "kata-sandi-tim-123",
+            "email": "reza@example.test", "password": "team-password-123",
         }).status_code, 303)
         self.assertEqual(admin_client.get("/admin/accounts").status_code, 200)
 
@@ -66,7 +66,7 @@ class AdminAccountTests(TicketTestCase):
             role="requester"
         )).status_code, 400)
         short = self.account_data()
-        short["password"] = short["password_confirm"] = "pendek"
+        short["password"] = short["password_confirm"] = "short"
         self.assertEqual(self.client.post("/admin/accounts", data=short).status_code, 400)
         self.assertEqual(self.client.post("/admin/accounts", data=self.account_data(
             email="rina@example.test"
@@ -101,9 +101,9 @@ class AdminAccountTests(TicketTestCase):
             })
             with app.app_context():
                 init_db()
-                create_first_admin("Admin Awal", "awal@example.test", "kata-sandi-awal-123")
+                create_first_admin("First Admin", "first@example.test", "first-password-123")
                 self.assertEqual(get_db().execute(
-                    "SELECT role FROM users WHERE email = ?", ("awal@example.test",)
+                    "SELECT role FROM users WHERE email = ?", ("first@example.test",)
                 ).fetchone()[0], "admin")
-                with self.assertRaisesRegex(ValueError, "Admin sudah ada"):
-                    create_first_admin("Admin Dua", "dua@example.test", "kata-sandi-dua-123")
+                with self.assertRaisesRegex(ValueError, "An admin already exists"):
+                    create_first_admin("Second Admin", "second@example.test", "second-password-123")

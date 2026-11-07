@@ -26,7 +26,7 @@ def ticket_list():
             "WHERE t.requester_id = ? ORDER BY t.updated_at DESC, t.id DESC",
             (g.user["id"],),
         ).fetchall()
-        heading = "Tiket saya"
+        heading = "My tickets"
     else:
         rows = get_db().execute(
             "SELECT t.*, r.display_name AS requester_name FROM tickets t "
@@ -34,7 +34,7 @@ def ticket_list():
             "WHERE t.assigned_agent_id = ? ORDER BY t.updated_at DESC, t.id DESC",
             (g.user["id"],),
         ).fetchall()
-        heading = "Tiket yang saya tangani"
+        heading = "Assigned to me"
     return render_template("ticket_list.html", tickets=rows, heading=heading)
 
 
@@ -97,7 +97,7 @@ def queue():
         "ORDER BY CASE t.urgency WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END, "
         "t.created_at, t.id"
     ).fetchall()
-    return render_template("ticket_list.html", tickets=rows, heading="Antrean tanpa petugas", is_queue=True)
+    return render_template("ticket_list.html", tickets=rows, heading="Unassigned queue", is_queue=True)
 
 
 @bp.post("/tickets/<int:ticket_id>/claim")

@@ -1,47 +1,47 @@
 {% extends 'base.html' %}
-{% block title %}Akun tim{% endblock %}
+{% block title %}Team accounts{% endblock %}
 {% block content %}
 <header class="page-head">
-  <p class="section-note">Pengelolaan tim</p>
-  <h1>Akun tim</h1>
-  <p class="muted">Admin membuat akun petugas atau admin lain. Pendaftaran umum hanya membuat akun pelapor.</p>
+  <p class="section-note">Team management</p>
+  <h1>Team accounts</h1>
+  <p class="muted">Admins create agent and admin accounts. Public registration creates requester accounts only.</p>
 </header>
 
 <section class="content-section">
-  <h2>Buat akun tim</h2>
-  <p class="muted">Email hanya dipakai untuk masuk. Aplikasi belum mengirim kata sandi melalui email.</p>
+  <h2>Create a team account</h2>
+  <p class="muted">Email is used for sign-in. The application does not email initial passwords.</p>
   <form class="form-panel content-form" method="post" action="{{ url_for('admin.create_account') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="display_name">Nama</label>
+    <label for="display_name">Name</label>
     <input id="display_name" name="display_name" maxlength="80" autocomplete="off" required>
     <label for="email">Email</label>
     <input id="email" name="email" type="email" maxlength="254" autocomplete="off" required>
-    <label for="role">Peran</label>
+    <label for="role">Role</label>
     <select id="role" name="role" required>
-      <option value="agent">Petugas — menangani tiket yang ditugaskan</option>
-      <option value="admin">Admin — melihat semua tiket dan mengelola tim</option>
+      <option value="agent">Agent: work on assigned tickets</option>
+      <option value="admin">Admin: view all tickets and manage the team</option>
     </select>
-    <label for="password">Kata sandi awal</label>
+    <label for="password">Initial password</label>
     <input id="password" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
-    <label for="password_confirm">Ulangi kata sandi awal</label>
+    <label for="password_confirm">Confirm initial password</label>
     <input id="password_confirm" name="password_confirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
-    <button class="button primary" type="submit">Buat akun tim</button>
+    <button class="button primary" type="submit">Create team account</button>
   </form>
 </section>
 
 <section class="content-section">
-  <h2>Petugas dan admin</h2>
-  <p class="table-hint">Geser tabel untuk melihat kolom lain.</p>
+  <h2>Agents and admins</h2>
+  <p class="table-hint">Scroll sideways to see more columns.</p>
   <div class="table-wrap">
     <table>
-      <thead><tr><th scope="col">Nama</th><th scope="col">Email</th><th scope="col">Peran</th><th scope="col">Status</th></tr></thead>
+      <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Status</th></tr></thead>
       <tbody>
         {% for account in accounts %}
         <tr>
           <td>{{ account['display_name'] }}</td>
           <td class="break-word">{{ account['email'] }}</td>
-          <td>{{ 'Petugas' if account['role'] == 'agent' else 'Admin' }}</td>
-          <td>{{ 'Aktif' if account['active'] else 'Nonaktif' }}</td>
+          <td>{{ 'Agent' if account['role'] == 'agent' else 'Admin' }}</td>
+          <td>{{ 'Active' if account['active'] else 'Inactive' }}</td>
         </tr>
         {% endfor %}
       </tbody>

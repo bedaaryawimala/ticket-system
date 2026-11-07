@@ -1,23 +1,23 @@
 {% extends 'base.html' %}
-{% block title %}Buat akun{% endblock %}
+{% block title %}Create account{% endblock %}
 {% block content %}
 <section class="login-wrap">
-  <p class="section-note">Akun pelapor</p>
-  <h1>Buat akun</h1>
-  <p class="muted">Akun baru hanya dapat membuat dan melihat tiket miliknya. Email belum diverifikasi pada demo lokal.</p>
+  <p class="section-note">Requester account</p>
+  <h1>Create an account</h1>
+  <p class="muted">Requester accounts can create tickets and view their own tickets. This local demo does not verify email ownership.</p>
   {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
   <form class="form-panel login-form" method="post" action="{{ url_for('auth.register') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="display_name">Nama</label>
+    <label for="display_name">Name</label>
     <input id="display_name" name="display_name" value="{{ name or '' }}" maxlength="80" autocomplete="name" required>
     <label for="email">Email</label>
     <input id="email" name="email" type="email" value="{{ email or '' }}" maxlength="254" autocomplete="email" required>
-    <label for="password">Kata sandi</label>
+    <label for="password">Password</label>
     <input id="password" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
-    <label for="password_confirm">Ulangi kata sandi</label>
+    <label for="password_confirm">Confirm password</label>
     <input id="password_confirm" name="password_confirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
-    <button class="button primary" type="submit">Buat akun</button>
+    <button class="button primary" type="submit">Create account</button>
   </form>
-  <p class="auth-links"><a href="{{ url_for('auth.login') }}">Sudah punya akun? Masuk</a></p>
+  <p class="auth-links"><a href="{{ url_for('auth.login') }}">Already have an account? Sign in</a></p>
 </section>
 {% endblock %}

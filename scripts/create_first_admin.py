@@ -15,7 +15,7 @@ def create_first_admin(name, email, password):
         raise ValueError(error)
     with write_transaction() as connection:
         if connection.execute("SELECT 1 FROM users WHERE role = 'admin' LIMIT 1").fetchone():
-            raise ValueError("Admin sudah ada. Buat akun tambahan dari halaman Akun tim.")
+            raise ValueError("An admin already exists. Create more accounts from Team accounts.")
         create_user(connection, name, email, password, "admin")
 
 
@@ -23,20 +23,20 @@ def main():
     app = create_app()
     with app.app_context():
         if get_db().execute("SELECT 1 FROM users WHERE role = 'admin' LIMIT 1").fetchone():
-            raise SystemExit("Admin sudah ada. Buat akun tambahan dari halaman Akun tim.")
-        name = input("Nama admin pertama: ")
-        email = input("Email admin pertama: ")
-        password = getpass.getpass("Kata sandi awal (minimal 12 karakter): ")
-        confirmation = getpass.getpass("Ulangi kata sandi: ")
+            raise SystemExit("An admin already exists. Create more accounts from Team accounts.")
+        name = input("First admin name: ")
+        email = input("First admin email: ")
+        password = getpass.getpass("Initial password (at least 12 characters): ")
+        confirmation = getpass.getpass("Confirm password: ")
         if password != confirmation:
-            raise SystemExit("Kata sandi yang diulang tidak sama.")
+            raise SystemExit("Passwords do not match.")
         try:
             create_first_admin(name, email, password)
         except ValueError as error:
             raise SystemExit(str(error)) from None
         except sqlite3.IntegrityError:
-            raise SystemExit("Email sudah digunakan.") from None
-    print("Admin pertama dibuat. Masuk melalui halaman login.")
+            raise SystemExit("This email address is already in use.") from None
+    print("First admin created. Sign in through the login page.")
 
 
 if __name__ == "__main__":

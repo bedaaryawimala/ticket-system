@@ -44,7 +44,7 @@ class TicketTestCase(unittest.TestCase):
     def new_ticket(self, owner="Rina"):
         with self.app.app_context():
             user = get_db().execute("SELECT * FROM users WHERE id = ?", (self.users[owner],)).fetchone()
-            return create_ticket(user, "Wi-Fi lab terputus", "Koneksi terputus sejak pagi.", "yes", "no", "disruptive")
+            return create_ticket(user, "Lab Wi-Fi is down", "The connection has been down since morning.", "yes", "no", "disruptive")
 
     def version(self, ticket_id):
         with self.app.app_context():

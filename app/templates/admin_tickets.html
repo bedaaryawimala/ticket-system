@@ -1,33 +1,33 @@
 {% extends 'base.html' %}
-{% block title %}Semua tiket{% endblock %}
+{% block title %}All tickets{% endblock %}
 {% block content %}
 <header class="page-head">
-  <p class="section-note">Pengawasan tim</p>
-  <h1>Semua tiket</h1>
-  <p class="muted">Cari permintaan dan lihat siapa yang sedang menanganinya.</p>
+  <p class="section-note">Team overview</p>
+  <h1>All tickets</h1>
+  <p class="muted">Find requests and see who is working on them.</p>
 </header>
 <form class="filters ticket-filters" method="get" action="{{ url_for('admin.ticket_list') }}">
-  <label for="q">Cari judul atau nomor</label>
+  <label for="q">Search title or ticket number</label>
   <input id="q" name="q" value="{{ query }}" maxlength="100">
   <label for="status">Status</label>
   <select id="status" name="status">
-    <option value="">Semua</option>
+    <option value="">All</option>
     {% for key, label in status_labels.items() %}
       <option value="{{ key }}" {% if key == status %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
-  <label for="urgency">Urgensi</label>
+  <label for="urgency">Urgency</label>
   <select id="urgency" name="urgency">
-    <option value="">Semua</option>
+    <option value="">All</option>
     {% for key, label in urgency_labels.items() %}<option value="{{ key }}" {% if key == urgency %}selected{% endif %}>{{ label }}</option>{% endfor %}
   </select>
-  <button class="button secondary" type="submit">Terapkan filter</button>
+  <button class="button secondary" type="submit">Apply filters</button>
 </form>
 {% if tickets %}
-<p class="table-hint">Geser tabel untuk melihat kolom lain.</p>
+<p class="table-hint">Scroll sideways to see more columns.</p>
 <div class="table-wrap">
   <table>
-    <thead><tr><th scope="col">Tiket</th><th scope="col">Urgensi</th><th scope="col">Status</th><th scope="col">Pelapor</th><th scope="col">Petugas</th><th scope="col">Diperbarui</th></tr></thead>
+    <thead><tr><th scope="col">Ticket</th><th scope="col">Urgency</th><th scope="col">Status</th><th scope="col">Requester</th><th scope="col">Agent</th><th scope="col">Updated</th></tr></thead>
     <tbody>
       {% for ticket in tickets %}
       <tr>
@@ -35,7 +35,7 @@
         <td><span class="urgency urgency-{{ ticket['urgency'] }}">{{ urgency_labels[ticket['urgency']] }}</span></td>
         <td><span class="status status-{{ ticket['status'] }}">{{ status_labels[ticket['status']] }}</span></td>
         <td>{{ ticket['requester_name'] }}</td>
-        <td>{{ ticket['agent_name'] or 'Belum ditugaskan' }}</td>
+        <td>{{ ticket['agent_name'] or 'Unassigned' }}</td>
         <td class="muted">{{ ticket['updated_at']|local_time }}</td>
       </tr>
       {% endfor %}
@@ -43,6 +43,6 @@
   </table>
 </div>
 {% else %}
-<div class="empty"><h2>Tidak ada tiket yang cocok</h2><p>Ubah kata pencarian atau status untuk melihat tiket lain.</p></div>
+<div class="empty"><h2>No matching tickets</h2><p>Change the search terms or filters and try again.</p></div>
 {% endif %}
 {% endblock %}

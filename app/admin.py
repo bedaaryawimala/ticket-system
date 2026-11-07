@@ -29,7 +29,7 @@ def create_account():
     password = request.form.get("password", "")
     confirmation = request.form.get("password_confirm", "")
     if role not in ("agent", "admin"):
-        raise TicketActionError(400, "Pilih peran petugas atau admin.")
+        raise TicketActionError(400, "Select the agent or admin role.")
     error = new_user_error(name, email, password, confirmation)
     if error is not None:
         raise TicketActionError(400, error)
@@ -37,15 +37,15 @@ def create_account():
         with write_transaction() as connection:
             create_user(connection, name, email, password, role)
     except sqlite3.IntegrityError:
-        raise TicketActionError(400, "Alamat email sudah digunakan.") from None
-    flash("Akun tim dibuat. Sampaikan kata sandi awal kepada pemilik akun secara langsung.")
+        raise TicketActionError(400, "This email address is already in use.") from None
+    flash("Team account created. Give the initial password directly to the account owner.")
     return redirect(url_for("admin.account_list"), code=303)
 
 
 def search_text():
     query = request.args.get("q", "").strip()
     if len(query) > 100:
-        raise TicketActionError(400, "Pencarian terlalu panjang.")
+        raise TicketActionError(400, "Search terms must be 100 characters or less.")
     return query
 
 
@@ -56,9 +56,9 @@ def filter_date(name):
     try:
         parsed = date.fromisoformat(raw_date)
     except ValueError:
-        raise TicketActionError(400, "Tanggal filter tidak valid.") from None
+        raise TicketActionError(400, "Invalid filter date.") from None
     if parsed.isoformat() != raw_date:
-        raise TicketActionError(400, "Tanggal filter tidak valid.")
+        raise TicketActionError(400, "Invalid filter date.")
     return raw_date
 
 
@@ -69,9 +69,9 @@ def ticket_list():
     status = request.args.get("status", "")
     urgency = request.args.get("urgency", "")
     if status not in ("", "open", "in_progress", "resolved", "closed"):
-        raise TicketActionError(400, "Status filter tidak valid.")
+        raise TicketActionError(400, "Invalid status filter.")
     if urgency not in ("", "low", "normal", "high"):
-        raise TicketActionError(400, "Urgensi filter tidak valid.")
+        raise TicketActionError(400, "Invalid urgency filter.")
     conditions = []
     parameters = []
     if query:
@@ -101,7 +101,7 @@ def assign(ticket_id):
     try:
         agent_id = int(raw_agent) if raw_agent else None
     except ValueError:
-        raise TicketActionError(400, "Pilih petugas yang valid.") from None
+        raise TicketActionError(400, "Select a valid agent.") from None
     assign_ticket(
         g.user,
         ticket_id,
@@ -147,11 +147,11 @@ def error_list():
     severity = request.args.get("severity", "")
     status = request.args.get("status", "")
     if severity not in ("", "error", "critical") or status not in ("", "new", "reviewed"):
-        raise TicketActionError(400, "Filter error tidak valid.")
+        raise TicketActionError(400, "Invalid error filter.")
     date_from = filter_date("from")
     date_to = filter_date("to")
     if date_from and date_to and date_from > date_to:
-        raise TicketActionError(400, "Tanggal awal harus sebelum tanggal akhir.")
+        raise TicketActionError(400, "The start date must be on or before the end date.")
     conditions = []
     parameters = []
     if query:
@@ -208,7 +208,7 @@ def error_detail(event_id):
 def review_error(event_id):
     with write_transaction() as connection:
         if connection.execute("SELECT id FROM error_events WHERE id = ?", (event_id,)).fetchone() is None:
-            raise TicketActionError(404, "Error tidak ditemukan.")
+            raise TicketActionError(404, "Error event not found.")
         connection.execute("INSERT OR IGNORE INTO error_reviews (error_id) VALUES (?)", (event_id,))
         connection.execute(
             "UPDATE error_reviews SET status = 'reviewed', reviewed_by = ?, reviewed_at = ? "
@@ -221,10 +221,10 @@ def review_error(event_id):
 @bp.post("/errors/<event_id>/notes")
 @role_required("admin")
 def add_error_note(event_id):
-    body = required_text(request.form.get("body"), 2000, "Catatan")
+    body = required_text(request.form.get("body"), 2000, "Note")
     with write_transaction() as connection:
         if connection.execute("SELECT id FROM error_events WHERE id = ?", (event_id,)).fetchone() is None:
-            raise TicketActionError(404, "Error tidak ditemukan.")
+            raise TicketActionError(404, "Error event not found.")
         connection.execute(
             "INSERT INTO error_review_notes (error_id, admin_id, body, created_at) VALUES (?, ?, ?, ?)",
             (event_id, g.user["id"], body, utc_now()),

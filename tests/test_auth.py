@@ -15,7 +15,7 @@ class AuthenticationTests(TicketTestCase):
     def test_login_logout_and_wrong_password(self):
         wrong = self.client.post("/login", data={"email": "rina@example.test", "password": "wrong"})
         self.assertEqual(wrong.status_code, 200)
-        self.assertIn("tidak cocok", wrong.get_data(as_text=True))
+        self.assertIn("Email or password is incorrect", wrong.get_data(as_text=True))
         accepted = self.client.post("/login", data={"email": "rina@example.test", "password": "test-password-123"})
         self.assertEqual(accepted.status_code, 303)
         self.assertEqual(self.client.get("/tickets").status_code, 200)

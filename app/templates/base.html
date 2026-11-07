@@ -1,36 +1,36 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Tiket Tim{% endblock %} | Tiket Tim</title>
+  <title>{% block title %}Team Tickets{% endblock %} | Team Tickets</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <div class="shell">
     <aside class="sidebar">
-      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">T</span><span>Tiket Tim<small>Meja permintaan</small></span></a>
+      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">T</span><span>Team Tickets<small>Small team requests</small></span></a>
       {% if g.user %}
-      <nav aria-label="Navigasi utama">
+      <nav aria-label="Main navigation">
         {% if g.user['role'] == 'requester' %}
-          <a href="{{ url_for('tickets.ticket_list') }}">Tiket saya</a>
-          <a href="{{ url_for('tickets.new_ticket') }}">Buat tiket</a>
+          <a href="{{ url_for('tickets.ticket_list') }}">My tickets</a>
+          <a href="{{ url_for('tickets.new_ticket') }}">Create ticket</a>
         {% elif g.user['role'] == 'agent' %}
-          <a href="{{ url_for('tickets.ticket_list') }}">Tiket saya</a>
-          <a href="{{ url_for('tickets.queue') }}">Antrean</a>
+          <a href="{{ url_for('tickets.ticket_list') }}">Assigned to me</a>
+          <a href="{{ url_for('tickets.queue') }}">Unassigned queue</a>
         {% else %}
-          <a href="{{ url_for('admin.ticket_list') }}">Semua tiket</a>
-          <a href="{{ url_for('tickets.queue') }}">Antrean</a>
-          <a href="{{ url_for('admin.account_list') }}">Akun tim</a>
-          <a href="{{ url_for('admin.error_list') }}">Error aplikasi</a>
+          <a href="{{ url_for('admin.ticket_list') }}">All tickets</a>
+          <a href="{{ url_for('tickets.queue') }}">Unassigned queue</a>
+          <a href="{{ url_for('admin.account_list') }}">Team accounts</a>
+          <a href="{{ url_for('admin.error_list') }}">Application errors</a>
         {% endif %}
       </nav>
       <div class="sidebar-footer">
         <span class="account-name">{{ g.user['display_name'] }}</span>
-        <span class="account-role">{{ {'requester': 'Pelapor', 'agent': 'Petugas', 'admin': 'Admin'}[g.user['role']] }}</span>
+        <span class="account-role">{{ {'requester': 'Requester', 'agent': 'Agent', 'admin': 'Admin'}[g.user['role']] }}</span>
         <form action="{{ url_for('auth.logout') }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="logout" type="submit">Keluar</button>
+          <button class="logout" type="submit">Sign out</button>
         </form>
       </div>
       {% endif %}
