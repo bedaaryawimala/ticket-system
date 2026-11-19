@@ -5,7 +5,7 @@
   <p class="section-note">Ticket requests for a small team</p>
   <h1>Sign in to Team Tickets</h1>
   <p class="muted">Report an issue, work on assigned tickets, or review team activity.</p>
-  <form class="form-panel login-form" method="post" action="/login-rollback-practice">
+  <form class="form-panel login-form" method="post" action="{{ url_for('auth.login') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="email">Email</label>
     <input id="email" name="email" type="email" maxlength="254" autocomplete="username" required>
